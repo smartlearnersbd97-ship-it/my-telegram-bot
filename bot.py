@@ -27,7 +27,7 @@ from aiogram.types import (
 
 load_dotenv()
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = "8965917672:AAHkxvT_GYkE4dgAokcjUdJ_ffA21eMmxkc"
 
 if not BOT_TOKEN:
     print("❌ BOT_TOKEN পাওয়া যায়নি")
