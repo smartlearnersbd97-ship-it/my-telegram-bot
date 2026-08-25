@@ -129,7 +129,7 @@ COURSE_POINTS = {
     "🔬 HSC-28 RM Physics": 5, "🧪 HSC-28 RM Chemistry": 5, "📐 HSC-28 RM Math": 5,
     "🧬 HSC-28 RM Biology": 5, "📖 HSC-28 RM EBI": 5, "🔥 HSC-28 RM Combo": 20,
     "📚 HSC-28 FT PCMB": 5, "📖 HSC-28 FT EBI 4.0": 5,
-    "🧬 HSC-28 ACS Fahad Biology ": 5, "📖 HSC-28 Banglabaz 8.0": 5,
+    "🧬 HSC-28 ACS Fahad Biology": 5, "📖 HSC-28 Banglabaz 8.0": 5,
     
     # SSC-27
     "📘 RM B2P 3.0": 5, "📘 RM FRPB 27": 5, "🔰 ACS FRB": 5,
