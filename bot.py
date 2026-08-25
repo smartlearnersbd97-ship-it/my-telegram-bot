@@ -2,7 +2,7 @@ import asyncio
 import os
 import sqlite3
 
-from aiohttp import web  # <--- শুধু এই নতুন লাইনটা এখানে বসিয়ে দিন
+from aiohttp import web  # <--- শুধু এই নতুন লাইনটা এখানে বসিয়ে দিন
 
 from dotenv import load_dotenv
 
@@ -30,7 +30,7 @@ load_dotenv()
 BOT_TOKEN = "8965917672:AAHkxvT_GYkE4dgAokcjUdJ_ffA21eMmxkc"
 
 if not BOT_TOKEN:
-    print("❌ BOT_TOKEN পাওয়া যায়নি")
+    print("❌ BOT_TOKEN পাওয়া যায়নি")
     exit()
 
 bot = Bot(
@@ -105,10 +105,6 @@ CHANNELS = [
 # =========================================================
 
 ADMIN_ID = 8629243439
-
-# =========================================================
-# COURSE POINTS
-# =========================================================
 
 # =========================================================
 # COURSE POINTS
@@ -328,7 +324,7 @@ def class_menu():
         ],
 
         [
-            # এখানে নামটা ঠিক করে দেওয়া হয়েছে
+            # এখানে নামটা ঠিক করে দেওয়া হয়েছে
             KeyboardButton(
                 text="🎓 College Admission Course" 
             )
@@ -583,7 +579,7 @@ async def profile_command(message):
         f"🚀 <b>User ID:</b> <code>{user_id}</code>\n"
         f"💰 <b>Balance:</b> {points} Point\n\n"
 
-        "বন্ধুদের আপনার Refer Link দিয়ে Invite করুন "
+        "বন্ধুদের আপনার Refer Link দিয়ে Invite করুন "
         "এবং ফ্রিতে Premium Course জিতে নাও! 😊✅"
     )
 
@@ -829,13 +825,13 @@ async def acs_physics(message):
             "• পরমাণুর মডেল\n\n"
 
             "⚪️ <b>PHYSICS CYCLE 05</b>\n"
-            "• স্থির তড়িৎ\n"
-            "• চল তড়িৎ\n"
+            "• স্থির তড়িৎ\n"
+            "• চল তড়িৎ\n"
             "• সেমিকন্ডাক্টর ও ইলেকট্রনিক্স\n\n"
 
             "⚪️ <b>PHYSICS CYCLE 06</b>\n"
-            "• তড়িৎ প্রবাহের ক্রিয়া\n"
-            "• তড়িৎ চুম্বক আবেশ\n"
+            "• তড়িৎ প্রবাহের ক্রিয়া\n"
+            "• তড়িৎ চুম্বক আবেশ\n"
             "• আধুনিক পদার্থবিজ্ঞান\n\n"
 
             "🎁 <b>কোর্সের সাথে পাবেন:</b>\n"
@@ -883,7 +879,7 @@ async def acs_chemistry(message):
 
             "📋 <b>HSC 2027 ACS HEMEL CHEMISTRY ALL CYCLE</b>\n\n"
 
-            "📖 <b>ইন্সট্রাক্টর:</b> 👉🏻 হিমেল ভাইয়া\n\n"
+            "📖 <b>ইন্সট্রাক্টর:</b> 👉🏻 হিমেল ভাইয়া\n\n"
 
             "⚪️ <b>কেমিস্ট্রি সাইকেল ০১</b>\n"
             "• ল্যাবরেটরী নিরাপদ ব্যবহার\n"
@@ -952,7 +948,7 @@ async def acs_math(message):
 
             "<b>ইন্সট্রাক্টর সমূহ</b>\n"
             "▫️ অভিদত্ত তুশার\n"
-            "▫️ রকিবুল ভাইয়া\n\n"
+            "▫️ রকিবুল ভাইয়া\n\n"
 
             "⚪️ <b>ম্যাথ সাইকেল ০১</b>\n"
             "• ম্যাট্রিক্স ও নির্ণায়ক\n"
@@ -1045,7 +1041,7 @@ async def acs_biology(message):
             "⚪️ <b>বায়োলজি সাইকেল ০৩</b>\n"
             "• অণুজীব\n"
             "• শৈবাল ও ছত্রাক\n"
-            "• ব্রায়োফাইটা ও টেরিডোফাইটা\n"
+            "• ব্রায়োফাইটা ও টেরিডোফাইটা\n"
             "• জীব প্রযুক্তি\n\n"
 
             "⚪️ <b>বায়োলজি সাইকেল ০৪</b>\n"
@@ -1174,7 +1170,7 @@ async def acs_bangla(message):
             "📍 HSC-27 Batch এর জন্য সম্পূর্ণ কোর্স\n"
             "📍 সর্বমোট 60+ টি ক্লাস\n"
             "📍 অভিজ্ঞ ইন্সট্রাক্টরদের ক্লাস\n"
-            "📍 বাংলা বিষয়ের পূর্ণাঙ্গ প্রস্তুতি\n"
+            "📍 বাংলা বিষয়ের পূর্ণাঙ্গ প্রস্তুতি\n"
             "📍 HSC পরীক্ষার জন্য প্রস্তুতিমূলক ক্লাস\n\n"
 
             "🔥 <b>অনুসর্গের ব্যঞ্জন</b>\n"
@@ -1484,7 +1480,7 @@ def hsc28_sub_menu(platform_name):
 async def hsc28_command(message, state: FSMContext):
     await state.set_state(MenuState.HSC28_PLATFORM)
     
-    # এখানে প্ল্যাটফর্ম সিলেক্ট করার ছবি দেওয়া হলো
+    # এখানে প্ল্যাটফর্ম সিলেক্ট করার ছবি দেওয়া হলো
     photo = "AgACAgUAAxkBAAIUVWqBwk2om5Q7FDV_8ziqbutItiX5AAJhE2sb9VsRVIdaOFFA0fJvAQADAgADeQADPQQ"
     
     await message.answer_photo(
@@ -1969,9 +1965,9 @@ async def add_point_command(message):
 
     args = message.text.split()
     
-    # সঠিক ফরম্যাট চেক করা
+    # সঠিক নিয়ম চেক করা
     if len(args) != 3:
-        await message.answer("⚠️ <b>সঠিক নিয়ম:</b>\n/addpoint <user_id> <amount>")
+        await message.answer("⚠️ <b>সঠিক নিয়ম:</b>\n/addpoint <user_id> <amount>")
         return
 
     try:
@@ -1981,7 +1977,7 @@ async def add_point_command(message):
         await message.answer("❌ User ID এবং Amount অবশ্যই সংখ্যা হতে হবে।")
         return
 
-    # ডাটাবেসে পয়েন্ট আপডেট করা
+    # ডাটাবেসে পয়েন্ট আপডেট করা
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 
@@ -1997,7 +1993,7 @@ async def add_point_command(message):
         conn.commit()
         
         await message.answer(
-            f"✅ <b>পয়েন্ট অ্যাড করা হয়েছে!</b>\n\n"
+            f"✅ <b>পয়েন্ট অ্যাড করা হয়েছে!</b>\n\n"
             f"👤 User ID: <code>{target_user_id}</code>\n"
             f"🎁 Added: {points_to_add} Points\n"
             f"💰 New Balance: {new_points} Points"
@@ -2007,14 +2003,14 @@ async def add_point_command(message):
         try:
             await bot.send_message(
                 target_user_id,
-                f"🎁 <b>Congratulations!</b>\nAdmin আপনাকে {points_to_add} Points উপহার দিয়েছে!\n"
+                f"🎁 <b>Congratulations!</b>\nAdmin আপনাকে {points_to_add} Points উপহার দিয়েছে!\n"
                 f"💰 আপনার বর্তমান ব্যালেন্স: {new_points} Points"
             )
         except Exception as e:
-            await message.answer("⚠️ ইউজারকে নোটিফিকেশন পাঠানো যায়নি (হয়তো সে বট ব্লক করেছে)।")
+            await message.answer("⚠️ ইউজারকে নোটিফিকেশন পাঠানো যায়নি (হয়তো সে বট ব্লক করেছে)।")
             
     else:
-        await message.answer("❌ এই User ID ডাটাবেসে পাওয়া যায়নি।")
+        await message.answer("❌ এই User ID ডাটাবেসে পাওয়া যায়নি।")
         
     conn.close()
 
@@ -2087,32 +2083,32 @@ async def handle_buy_course(callback):
     
     if not user:
         conn.close()
-        await callback.answer("⚠️ దয়া করে আগে /start কমান্ড দিন।", show_alert=True)
+        await callback.answer("⚠️ দয়া করে আগে /start কমান্ড দিন।", show_alert=True)
         return
         
     current_points = user[0]
     
-    # ১. পয়েন্ট চেক
+    # ১. পয়েন্ট চেক
     if current_points < required_points:
         conn.close()
         shortfall = required_points - current_points
         await callback.answer(
-            f"❌ আপনার পর্যাপ্ত পয়েন্ট নেই!\n\n"
+            f"❌ আপনার পর্যাপ্ত পয়েন্ট নেই!\n\n"
             f"আপনার আছে: {current_points} Points\n"
-            f"প্রয়োজন: {required_points} Points\n"
+            f"প্রয়োজন: {required_points} Points\n"
             f"আরও {shortfall} Points লাগবে।",
             show_alert=True
         )
         return
         
-    # ২. পয়েন্ট কেটে নেওয়া
+    # ২. পয়েন্ট কেটে নেওয়া
     new_points = current_points - required_points
     cursor.execute("UPDATE users SET points=? WHERE user_id=?", (new_points, user_id))
     conn.commit()
     conn.close()
     
     # ৩. ইনভাইট লিংক জেনারেট এবং মেসেজ পাঠানো
-    await callback.message.answer("⏳ আপনার কোর্সের অ্যাক্সেস লিংক তৈরি করা হচ্ছে... দয়া করে অপেক্ষা করুন।")
+    await callback.message.answer("⏳ আপনার কোর্সের অ্যাক্সেস লিংক তৈরি করা হচ্ছে... দয়া করে অপেক্ষা করুন।")
     
     try:
         # Full Combo-এর জন্য স্পেশাল লজিক (HSC-27 & HSC-28)
@@ -2137,10 +2133,10 @@ async def handle_buy_course(callback):
             msg = (
                 f"✅ <b>Purchase Successful!</b> 🎉\n\n"
                 f"🎯 <b>Course:</b> {course_name}\n"
-                f"💰 <b>পয়েন্ট কাটা হয়েছে:</b> {required_points}\n"
+                f"💰 <b>পয়েন্ট কাটা হয়েছে:</b> {required_points}\n"
                 f"💳 <b>বর্তমান ব্যালেন্স:</b> {new_points} Points\n\n"
                 f"🔗 <b>Your Access Links (One-time use):</b>\n\n{links_text}\n"
-                f"⚠️ <i>লিংকগুলো শুধুমাত্র একবার কাজ করবে, তাই অন্য কাউকে শেয়ার করবেন না!</i>"
+                f"⚠️ <i>লিংকগুলো শুধুমাত্র একবার কাজ করবে, তাই অন্য কাউকে শেয়ার করবেন না!</i>"
             )
             
         # সাধারণ (সিঙ্গেল) কোর্সের জন্য
@@ -2151,20 +2147,20 @@ async def handle_buy_course(callback):
             msg = (
                 f"✅ <b>Purchase Successful!</b> 🎉\n\n"
                 f"🎯 <b>Course:</b> {course_name}\n"
-                f"💰 <b>পয়েন্ট কাটা হয়েছে:</b> {required_points}\n"
+                f"💰 <b>পয়েন্ট কাটা হয়েছে:</b> {required_points}\n"
                 f"💳 <b>বর্তমান ব্যালেন্স:</b> {new_points} Points\n\n"
                 f"🔗 <b>Your Access Link (One-time use):</b>\n{invite.invite_link}\n\n"
-                f"⚠️ <i>লিংকটি শুধুমাত্র একবার কাজ করবে, তাই অন্য কাউকে শেয়ার করবেন না!</i>"
+                f"⚠️ <i>লিংকটি শুধুমাত্র একবার কাজ করবে, তাই অন্য কাউকে শেয়ার করবেন না!</i>"
             )
             
         await callback.message.answer(msg)
         await callback.answer()
         
     except Exception as e:
-        # যদি বট গ্রুপে অ্যাডমিন না হয় বা অন্য কোনো কারণে লিংক তৈরি করতে না পারে
+        # যদি বট গ্রুপে অ্যাডমিন না হয় বা অন্য কোনো কারণে লিংক তৈরি করতে না পারে
         print(f"Error creating invite link: {e}")
         
-        # যেহেতু লিংক দিতে পারেনি, তাই ইউজারের পয়েন্ট ফেরত দেওয়া
+        # যেহেতু লিংক দিতে পারেনি, তাই ইউজারের পয়েন্ট ফেরত দেওয়া
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
         cursor.execute("UPDATE users SET points=? WHERE user_id=?", (current_points, user_id))
@@ -2172,30 +2168,15 @@ async def handle_buy_course(callback):
         conn.close()
         
         await callback.message.answer(
-            "❌ <b>দুঃখিত! টেকনিক্যাল সমস্যার কারণে লিংক তৈরি করা যায়নি।</b>\n"
-            "আপনার পয়েন্ট রিফান্ড করা হয়েছে। অনুগ্রহ করে অ্যাডমিনের সাথে যোগাযোগ করুন।"
+            "❌ <b>দুঃখিত! টেকনিক্যাল সমস্যার কারণে লিংক তৈরি করা যায়নি।</b>\n"
+            "আপনার পয়েন্ট রিফান্ড করা হয়েছে। অনুগ্রহ করে অ্যাডমিনের সাথে যোগাযোগ করুন।"
         )
         
-    except Exception as e:
-        # যদি বট গ্রুপে অ্যাডমিন না হয় বা অন্য কোনো কারণে লিংক তৈরি করতে না পারে
-        print(f"Error creating invite link: {e}")
-        
-        # যেহেতু লিংক দিতে পারেনি, তাই ইউজারের পয়েন্ট ফেরত দেওয়া
-        conn = sqlite3.connect(DB_NAME)
-        cursor = conn.cursor()
-        cursor.execute("UPDATE users SET points=? WHERE user_id=?", (current_points, user_id))
-        conn.commit()
-        conn.close()
-        
-        await callback.message.answer(
-            "❌ <b>দুঃখিত! টেকনিক্যাল সমস্যার কারণে লিংক তৈরি করা যায়নি।</b>\n"
-            "আপনার পয়েন্ট রিফান্ড করা হয়েছে। অনুগ্রহ করে অ্যাডমিনের সাথে যোগাযোগ করুন।"
-        )
 # =========================================================
 # MORE ADMIN COMMANDS
 # =========================================================
 
-# --- ১. পয়েন্ট কেটে নেওয়া (ভুল ঠিক করার জন্য) ---
+# --- ১. পয়েন্ট কেটে নেওয়া (ভুল ঠিক করার জন্য) ---
 @dp.message(F.text.startswith("/removepoint"))
 async def remove_point_command(message):
     if message.from_user.id != ADMIN_ID:
@@ -2203,7 +2184,7 @@ async def remove_point_command(message):
     
     args = message.text.split()
     if len(args) != 3:
-        await message.answer("⚠️ <b>সঠিক নিয়ম:</b>\n/removepoint <user_id> <amount>")
+        await message.answer("⚠️ <b>সঠিক নিয়ম:</b>\n/removepoint <user_id> <amount>")
         return
 
     try:
@@ -2219,7 +2200,7 @@ async def remove_point_command(message):
     user = cursor.fetchone()
 
     if user:
-        # পয়েন্ট যেন মাইনাস (0 এর নিচে) না হয়ে যায়
+        # পয়েন্ট যেন মাইনাস (0 এর নিচে) না হয়ে যায়
         current_points = user[0]
         new_points = max(0, current_points - points_to_remove)
         
@@ -2227,13 +2208,13 @@ async def remove_point_command(message):
         conn.commit()
         
         await message.answer(
-            f"✅ <b>পয়েন্ট মাইনাস করা হয়েছে!</b>\n\n"
+            f"✅ <b>পয়েন্ট মাইনাস করা হয়েছে!</b>\n\n"
             f"👤 User ID: <code>{target_user_id}</code>\n"
             f"➖ Removed: {points_to_remove} Points\n"
             f"💰 New Balance: {new_points} Points"
         )
     else:
-        await message.answer("❌ এই User ID ডাটাবেসে পাওয়া যায়নি।")
+        await message.answer("❌ এই User ID ডাটাবেসে পাওয়া যায়নি।")
     conn.close()
 
 
@@ -2245,7 +2226,7 @@ async def userinfo_command(message):
         
     args = message.text.split()
     if len(args) != 2:
-        await message.answer("⚠️ <b>সঠিক নিয়ম:</b>\n/userinfo <user_id>")
+        await message.answer("⚠️ <b>সঠিক নিয়ম:</b>\n/userinfo <user_id>")
         return
         
     try:
@@ -2272,7 +2253,7 @@ async def userinfo_command(message):
             f"👥 Total Referrals: {referrals}"
         )
     else:
-        await message.answer("❌ ইউজার ডাটাবেসে পাওয়া যায়নি।")
+        await message.answer("❌ ইউজার ডাটাবেসে পাওয়া যায়নি।")
 
 
 # --- ৩. বটের টোটাল স্ট্যাটাস দেখা ---
@@ -2302,7 +2283,7 @@ async def broadcast_command(message):
     text_to_send = message.text.replace("/broadcast", "").strip()
     
     if not text_to_send:
-        await message.answer("⚠️ <b>সঠিক নিয়ম:</b>\n/broadcast <আপনার মেসেজ>")
+        await message.answer("⚠️ <b>সঠিক নিয়ম:</b>\n/broadcast <আপনার মেসেজ>")
         return
 
     conn = sqlite3.connect(DB_NAME)
@@ -2311,7 +2292,7 @@ async def broadcast_command(message):
     users = cursor.fetchall()
     conn.close()
 
-    await message.answer(f"📢 Broadcast শুরু হয়েছে... (Total users: {len(users)})\nদয়া করে অপেক্ষা করুন।")
+    await message.answer(f"📢 Broadcast শুরু হয়েছে... (Total users: {len(users)})\nদয়া করে অপেক্ষা করুন।")
     
     success_count = 0
     for user in users:
@@ -2323,8 +2304,8 @@ async def broadcast_command(message):
             pass  # ইউজার বট ব্লক করে দিলে এরর ইগনোর করবে
             
     await message.answer(
-        f"✅ <b>Broadcast সম্পন্ন হয়েছে!</b>\n\n"
-        f"সাফল্যজনকভাবে মেসেজ পাঠানো হয়েছে: {success_count} জনকে।"
+        f"✅ <b>Broadcast সম্পন্ন হয়েছে!</b>\n\n"
+        f"সাফল্যজনকভাবে মেসেজ পাঠানো হয়েছে: {success_count} জনকে।"
     )
 
 # =========================================================
