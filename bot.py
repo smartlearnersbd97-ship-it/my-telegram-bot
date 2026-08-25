@@ -203,7 +203,7 @@ CALLBACK_TO_COURSE = {
     "buy_h28_rm_ebi": "📖 HSC-28 RM EBI", "buy_h28_rm_combo": "🔥 HSC-28 RM Combo",
     
     "buy_h28_ft_pcmb": "📚 HSC-28 FT PCMB", "buy_h28_ft_ebi": "📖 HSC-28 FT EBI 4.0",
-    "buy_h28_bio_haters": "🧬 HSC-28 Biology Haters", "buy_h28_banglabaz": "📖 HSC-28 Banglabaz 8.0",
+    "buy_h28_fhad_bio": "🧬 HSC-28 ACS Fahad Biology", "buy_h28_banglabaz": "📖 HSC-28 Banglabaz 8.0",
 
     # SSC-27
     "buy_s27_rm_b2p": "📘 RM B2P 3.0",
