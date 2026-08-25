@@ -1,9 +1,7 @@
 import asyncio
 import os
-import sqlite3
 
-from aiohttp import web  # <--- শুধু এই নতুন লাইনটা এখানে বসিয়ে দিন
-
+from aiohttp import web  
 from dotenv import load_dotenv
 
 from aiogram import Bot, Dispatcher, F
@@ -20,6 +18,8 @@ from aiogram.types import (
     KeyboardButton
 )
 
+# MongoDB-এর জন্য নতুন প্যাকেজ
+from motor.motor_asyncio import AsyncIOMotorClient
 
 # =========================================================
 # BOT SETUP
@@ -42,6 +42,20 @@ bot = Bot(
 
 dp = Dispatcher()
 
+# =========================================================
+# DATABASE SETUP (MongoDB)
+# =========================================================
+# ⚠️ নিচে <db_password> এর জায়গায় তোমার আসল পাসওয়ার্ডটি বসিয়ে দাও (ব্র্যাকেট মুছে)
+MONGO_URL = "mongodb+srv://smartlearnersbd97_db_user:botpassword123@cluster0.naye6gf.mongodb.net/?appName=Cluster0"
+
+try:
+    cluster = AsyncIOMotorClient(MONGO_URL)
+    db = cluster["tg_courses_bot"]  # ডাটাবেসের নাম
+    users_collection = db["users"]  # টেবিল বা কালেকশনের নাম
+    print("✅ Database Connected Successfully!")
+except Exception as e:
+    print(f"❌ Database Connection Error: {e}")
+
 print("Bot setup complete")
 
 
@@ -59,35 +73,6 @@ class MenuState(StatesGroup):
     COLLEGE_ADM = State()
     HSC28_PLATFORM = State()
     HSC28_SUB_PLATFORM = State()
-
-# =========================================================
-# DATABASE
-# =========================================================
-
-DB_NAME = "bot.db"
-
-
-def create_database():
-
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY,
-            name TEXT,
-            username TEXT,
-            points INTEGER DEFAULT 0,
-            referrals INTEGER DEFAULT 0,
-            referred_by INTEGER
-        )
-    """)
-
-    conn.commit()
-    conn.close()
-
-
-create_database()
 
 
 # =========================================================
@@ -246,33 +231,27 @@ SSC27_RM_COMBO = [
 def join_keyboard():
 
     buttons = [
-
         [
             InlineKeyboardButton(
                 text="📚 TG Courses Official",
                 url="https://t.me/TGCoursesOfficial"
             )
         ],
-
         [
             InlineKeyboardButton(
                 text="🔐 TG Courses Paid",
                 url="https://t.me/TGCoursesPaid"
             )
         ],
-
         [
             InlineKeyboardButton(
                 text="✅ Check",
                 callback_data="check_join"
             )
         ]
-
     ]
 
-    return InlineKeyboardMarkup(
-        inline_keyboard=buttons
-    )
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
 # =========================================================
@@ -282,27 +261,20 @@ def join_keyboard():
 def main_menu():
 
     buttons = [
-
         [
             KeyboardButton(text="👤 Profile"),
             KeyboardButton(text="⚡ Referral")
         ],
-
         [
             KeyboardButton(text="📚 Redeem Courses"),
             KeyboardButton(text="🏆 Leaderboard")
         ],
-
         [
             KeyboardButton(text="কোর্স কিভাবে নিবে 🛠️")
         ]
-
     ]
 
-    return ReplyKeyboardMarkup(
-        keyboard=buttons,
-        resize_keyboard=True
-    )
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 
 # =========================================================
@@ -312,35 +284,24 @@ def main_menu():
 def class_menu():
 
     buttons = [
-
         [
             KeyboardButton(text="🎓 HSC-27"),
             KeyboardButton(text="🎓 HSC-28")
         ],
-
         [
             KeyboardButton(text="🎓 SSC-27"),
             KeyboardButton(text="🎓 SSC-28")
         ],
-
         [
-            # এখানে নামটা ঠিক করে দেওয়া হয়েছে
-            KeyboardButton(
-                text="🎓 College Admission Course" 
-            )
+            KeyboardButton(text="🎓 College Admission Course")
         ],
-
         [
             KeyboardButton(text="⬅️ Back"),
             KeyboardButton(text="🔝 Main Menu")
         ]
-
     ]
 
-    return ReplyKeyboardMarkup(
-        keyboard=buttons,
-        resize_keyboard=True
-    )
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 # =========================================================
 # HSC-27 PLATFORM MENU
@@ -349,23 +310,17 @@ def class_menu():
 def hsc27_platform_menu():
 
     buttons = [
-
         [
             KeyboardButton(text="🔰 ACS"),
             KeyboardButton(text="🎓 Udvash")
         ],
-
         [
             KeyboardButton(text="⬅️ Back"),
             KeyboardButton(text="🔝 Main Menu")
         ]
-
     ]
 
-    return ReplyKeyboardMarkup(
-        keyboard=buttons,
-        resize_keyboard=True
-    )
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 
 # =========================================================
@@ -384,7 +339,6 @@ async def start_command(message):
     referred_by = None
 
     if len(args) > 1:
-
         try:
             referred_by = int(args[1])
         except ValueError:
@@ -393,83 +347,38 @@ async def start_command(message):
     if referred_by == user_id:
         referred_by = None
 
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT user_id FROM users WHERE user_id=?",
-        (user_id,)
-    )
-
-    user = cursor.fetchone()
+    user = await users_collection.find_one({"user_id": user_id})
 
     if not user:
-
-        cursor.execute(
-            """
-            INSERT INTO users
-            (
-                user_id,
-                name,
-                username,
-                referred_by
-            )
-            VALUES (?, ?, ?, ?)
-            """,
-            (
-                user_id,
-                name,
-                username,
-                referred_by
-            )
-        )
+        # নতুন ইউজার
+        await users_collection.insert_one({
+            "user_id": user_id,
+            "name": name,
+            "username": username,
+            "points": 0,
+            "referrals": 0,
+            "referred_by": referred_by
+        })
 
         if referred_by:
-
-            cursor.execute(
-                """
-                UPDATE users
-                SET
-                    referrals = referrals + 1,
-                    points = points + 1
-                WHERE user_id=?
-                """,
-                (referred_by,)
+            await users_collection.update_one(
+                {"user_id": referred_by},
+                {"$inc": {"referrals": 1, "points": 1}}
             )
-
     else:
-
-        cursor.execute(
-            """
-            UPDATE users
-            SET
-                name=?,
-                username=?
-            WHERE user_id=?
-            """,
-            (
-                name,
-                username,
-                user_id
-            )
+        # পুরোনো ইউজার আপডেট
+        await users_collection.update_one(
+            {"user_id": user_id},
+            {"$set": {"name": name, "username": username}}
         )
 
-    conn.commit()
-    conn.close()
-
     await message.answer(
-
         "👋 <b>Welcome to TG COURSES!</b>\n\n"
-
         "🎁 <b>Free Premium Courses</b>\n\n"
-
         "রেফার করে আমাদের Premium Course গুলো "
         "ফ্রিতে পেতে পারো! 🎓🔥\n\n"
-
         "📢 প্রথমে আমাদের দুইটি চ্যানেলে Join করো।\n\n"
-
         "তারপর নিচের <b>✅ Check</b> বাটনে ক্লিক করো।",
-
         reply_markup=join_keyboard()
     )
 
@@ -486,55 +395,31 @@ async def check_join(callback):
     not_joined = []
 
     for channel in CHANNELS:
-
         try:
-
-            member = await bot.get_chat_member(
-                chat_id=channel,
-                user_id=user_id
-            )
-
+            member = await bot.get_chat_member(chat_id=channel, user_id=user_id)
             if member.status in ["left", "kicked"]:
                 not_joined.append(channel)
-
         except Exception as e:
-
-            print(
-                f"Check Join Error {channel}:",
-                e
-            )
-
+            print(f"Check Join Error {channel}:", e)
             not_joined.append(channel)
 
     if not not_joined:
-
         await callback.message.answer(
-
             "✅ <b>Verification Successful!</b>\n\n"
-
             "🎉 Welcome to TG COURSES!\n\n"
-
             "আপনি এখন বটটি ব্যবহার করতে পারবেন।\n\n"
-
             "🚀 এখন থেকে আপনি:\n"
             "• Referral করতে পারবেন\n"
             "• Points earn করতে পারবেন\n"
             "• Course options দেখতে পারবেন",
-
             reply_markup=main_menu()
         )
-
     else:
-
         await callback.message.answer(
-
             "❌ <b>Access Denied!</b>\n\n"
-
             "বটটি ব্যবহার করতে হলে আপনাকে অবশ্যই "
             "আমাদের সব চ্যানেলে Join থাকতে হবে।\n\n"
-
             "👇 আগে Join করুন এবং আবার Check করুন।",
-
             reply_markup=join_keyboard()
         )
 
@@ -550,7 +435,6 @@ async def profile_command(message):
 
     user_id = message.from_user.id
     name = message.from_user.full_name
-
     username = message.from_user.username
 
     if username:
@@ -558,27 +442,14 @@ async def profile_command(message):
     else:
         username = "Not set"
 
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT points FROM users WHERE user_id=?",
-        (user_id,)
-    )
-
-    user = cursor.fetchone()
-
-    conn.close()
-
-    points = user[0] if user else 0
+    user = await users_collection.find_one({"user_id": user_id})
+    points = user.get("points", 0) if user else 0
 
     await message.answer(
-
         f"🙍‍♂️ <b>Your Name:</b> {name}\n"
         f"🔥 <b>Username:</b> {username}\n"
         f"🚀 <b>User ID:</b> <code>{user_id}</code>\n"
         f"💰 <b>Balance:</b> {points} Point\n\n"
-
         "বন্ধুদের আপনার Refer Link দিয়ে Invite করুন "
         "এবং ফ্রিতে Premium Course জিতে নাও! 😊✅"
     )
@@ -592,33 +463,16 @@ async def profile_command(message):
 async def referral_command(message):
 
     user_id = message.from_user.id
+    referral_link = f"https://t.me/TGCoursesRefer_bot?start={user_id}"
 
-    referral_link = (
-        f"https://t.me/TGCoursesRefer_bot?start={user_id}"
-    )
-
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT referrals FROM users WHERE user_id=?",
-        (user_id,)
-    )
-
-    user = cursor.fetchone()
-
-    conn.close()
-
-    referrals = user[0] if user else 0
+    user = await users_collection.find_one({"user_id": user_id})
+    referrals = user.get("referrals", 0) if user else 0
 
     await message.answer(
-
         f"💁‍♂️ <b>Your Total Referrals:</b> "
         f"{referrals} টি\n\n"
-
         f"📎 <b>Your Referral Link:</b>\n"
         f"{referral_link}\n\n"
-
         "🎁 প্রতি রেফারে <b>1 Point</b> Add হবে! ✅"
     )
 
@@ -638,14 +492,11 @@ async def redeem_courses(message, state: FSMContext):
     )
 
     await message.answer_photo(
-
         photo=photo,
-
         caption=(
             "📚 আপনি যে ক্লাসের কোর্স নিতে চান,\n"
             "সেটি সিলেক্ট করুন 👇"
         ),
-
         reply_markup=class_menu()
     )
 
@@ -665,15 +516,12 @@ async def hsc27_command(message, state: FSMContext):
     )
 
     await message.answer_photo(
-
         photo=photo,
-
         caption=(
             "🎓 <b>HSC-27</b>\n\n"
             "আপনি যে প্ল্যাটফর্মের কোর্স নিতে চান, "
             "সেটি সিলেক্ট করুন 📚👇"
         ),
-
         reply_markup=hsc27_platform_menu()
     )
 
@@ -693,44 +541,32 @@ async def acs_menu(message, state: FSMContext):
     )
 
     buttons = [
-
         [
             KeyboardButton(text="🧬 ACS Physics"),
             KeyboardButton(text="🧪 ACS Chemistry")
         ],
-
         [
             KeyboardButton(text="📐 ACS Math"),
             KeyboardButton(text="🔬 ACS Biology")
         ],
-
         [
             KeyboardButton(text="📖 ACS English"),
             KeyboardButton(text="📖 ACS Bangla"),
             KeyboardButton(text="💻 ACS ICT")
         ],
-
         [
             KeyboardButton(text="🔥 ACS Full Combo")
         ],
-
         [
             KeyboardButton(text="⬅️ Back"),
             KeyboardButton(text="🔝 Main Menu")
         ]
-
     ]
 
     await message.answer_photo(
-
         photo=photo,
-
         caption="🔰 <b>ACS Course List 👇</b>",
-
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=buttons,
-            resize_keyboard=True
-        )
+        reply_markup=ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
     )
 
 
@@ -749,35 +585,23 @@ async def udvash_menu(message, state: FSMContext):
     )
 
     buttons = [
-
         [
-            KeyboardButton(
-                text="🎓 Udvash 1st Year Prime Batch"
-            )
+            KeyboardButton(text="🎓 Udvash 1st Year Prime Batch")
         ],
-
         [
             KeyboardButton(text="📚 Udvash English-Bangla"),
             KeyboardButton(text="💻 Udvash ICT")
         ],
-
         [
             KeyboardButton(text="⬅️ Back"),
             KeyboardButton(text="🔝 Main Menu")
         ]
-
     ]
 
     await message.answer_photo(
-
         photo=photo,
-
         caption="🎓 <b>Udvash Course List 👇</b>",
-
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=buttons,
-            resize_keyboard=True
-        )
+        reply_markup=ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
     )
 
 # =========================================================
@@ -787,53 +611,40 @@ async def udvash_menu(message, state: FSMContext):
 @dp.message(F.text == "🧬 ACS Physics")
 async def acs_physics(message):
 
-    photo = (
-        "AgACAgUAAxkBAAIWemqCOShig8iLcFcI2rpC2I85dpkH"
-        "AALXEWsb9VsZVCQQ4WTwl6BQAQADAgADbQADPQQ"
-    )
+    photo = "AgACAgUAAxkBAAIWemqCOShig8iLcFcI2rpC2I85dpkHAALXEWsb9VsZVCQQ4WTwl6BQAQADAgADbQADPQQ"
 
     await message.answer_photo(
-
         photo=photo,
-
         caption=(
             "📘 🔥 <b>HSC-27 ACS PHYSICS</b> 🔥\n"
             "1st & 2nd All Cycle\n\n"
-
             "👨‍🏫 <b>ইন্সট্রাক্টর:</b>\n"
             "💠 অপূর্ব ভাই\n"
             "💠 মাশরুর ভাই\n\n"
-
             "⚪️ <b>PHYSICS CYCLE 01</b>\n"
             "• ভৌতজগৎ ও পরিমাপ\n"
             "• ভেক্টর\n"
             "• গতিবিদ্যা\n\n"
-
             "⚪️ <b>PHYSICS CYCLE 02</b>\n"
             "• নিউটনিয়ান বলবিদ্যা\n"
             "• কাজ, ক্ষমতা ও শক্তি\n"
             "• মহাকর্ষ ও অভিকর্ষ\n\n"
-
             "⚪️ <b>PHYSICS CYCLE 03</b>\n"
             "• পর্যাবৃত্ত গতি\n"
             "• তরঙ্গ\n"
             "• জ্যামিতিক আলোকবিজ্ঞান\n\n"
-
             "⚪️ <b>PHYSICS CYCLE 04</b>\n"
             "• আদর্শ গ্যাস গতিতত্ত্ব\n"
             "• তাপগতিবিদ্যা\n"
             "• পরমাণুর মডেল\n\n"
-
             "⚪️ <b>PHYSICS CYCLE 05</b>\n"
             "• স্থির তড়িৎ\n"
             "• চল তড়িৎ\n"
             "• সেমিকন্ডাক্টর ও ইলেকট্রনিক্স\n\n"
-
             "⚪️ <b>PHYSICS CYCLE 06</b>\n"
             "• তড়িৎ প্রবাহের ক্রিয়া\n"
             "• তড়িৎ চুম্বক আবেশ\n"
             "• আধুনিক পদার্থবিজ্ঞান\n\n"
-
             "🎁 <b>কোর্সের সাথে পাবেন:</b>\n"
             "📍 টপিকভিত্তিক ক্লাস\n"
             "📍 Lecture Sheet\n"
@@ -841,66 +652,37 @@ async def acs_physics(message):
             "📍 Practice Sheet\n"
             "📍 Doubt Solve Class\n"
             "📍 Lifetime Access\n\n"
-
             "💰 <b>মূল্য: 5 Points</b>"
         ),
-
         reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="🛒 Buy Course — 5 Points",
-                        callback_data="buy_acs_physics"
-                    )
-                ]
-            ]
+            inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 5 Points", callback_data="buy_acs_physics")]]
         )
     )
 
-
-# =========================================================
-# ACS CHEMISTRY
-# =========================================================
-
 @dp.message(F.text == "🧪 ACS Chemistry")
 async def acs_chemistry(message):
-
-    photo = (
-        "AgACAgUAAxkBAAIWfGqCOT5pe4_YWRjw8F6p55heuQ6"
-        "AAALYEWsb9VsZVIQOZ2cp4bUdAQADAgADeAADPQQ"
-    )
-
+    photo = "AgACAgUAAxkBAAIWfGqCOT5pe4_YWRjw8F6p55heuQ6AAALYEWsb9VsZVIQOZ2cp4bUdAQADAgADeAADPQQ"
     await message.answer_photo(
-
         photo=photo,
-
         caption=(
             "📘 🔥 <b>HSC-27 ACS HEMEL CHEMISTRY ALL CYCLE (1-5)</b> 🔥\n\n"
-
             "📋 <b>HSC 2027 ACS HEMEL CHEMISTRY ALL CYCLE</b>\n\n"
-
             "📖 <b>ইন্সট্রাক্টর:</b> 👉🏻 হিমেল ভাইয়া\n\n"
-
             "⚪️ <b>কেমিস্ট্রি সাইকেল ০১</b>\n"
             "• ল্যাবরেটরী নিরাপদ ব্যবহার\n"
             "• গুণগত রসায়ন\n\n"
-
             "⚪️ <b>কেমিস্ট্রি সাইকেল ০২</b>\n"
             "• মৌলের পর্যায়বৃত্ত ধর্ম\n"
             "• কর্মমুখী রসায়ন\n\n"
-
             "⚪️ <b>কেমিস্ট্রি সাইকেল ০৩</b>\n"
             "• পরিবেশ রসায়ন\n"
             "• রাসায়নিক পরিবর্তন\n\n"
-
             "⚪️ <b>কেমিস্ট্রি সাইকেল ০৪</b>\n"
             "• জৈব রসায়ন\n\n"
-
-            "⚪️ <b>কেমিস্ট্রি সাইকেল ০۵</b>\n"
+            "⚪️ <b>কেমিস্ট্রি সাইকেল ০৫</b>\n"
             "• পরিমাণগত রসায়ন\n"
             "• অর্থনৈতিক রসায়ন\n"
             "• তড়িৎ রসায়ন\n\n"
-
             "🎁 <b>কোর্সের সাথে পাবেন:</b>\n"
             "📍 টপিক ভিত্তিক ক্লাস (720p)\n"
             "📍 ক্লাসের লেকচার শীট\n"
@@ -908,79 +690,49 @@ async def acs_chemistry(message):
             "📍 প্র্যাকটিস শীট\n"
             "📍 ডাউট সলভ ক্লাস\n"
             "📍 লাইফটাইম এক্সেস\n\n"
-
             "💰 <b>মূল্য: 5 Points</b>"
         ),
-
         reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="🛒 Buy Course — 5 Points",
-                        callback_data="buy_acs_chemistry"
-                    )
-                ]
-            ]
+            inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 5 Points", callback_data="buy_acs_chemistry")]]
         )
     )
 
-
-# =========================================================
-# ACS MATH
-# =========================================================
-
 @dp.message(F.text == "📐 ACS Math")
 async def acs_math(message):
-
-    photo = (
-        "AgACAgUAAxkBAAIWgGqCOWgvQ_yZriR1zf0bUuxWxj2W"
-        "AALaEWsb9VsZVJWuVLa-4EzhAQADAgADeAADPQQ"
-    )
-
+    photo = "AgACAgUAAxkBAAIWgGqCOWgvQ_yZriR1zf0bUuxWxj2WAALaEWsb9VsZVJWuVLa-4EzhAQADAgADeAADPQQ"
     await message.answer_photo(
-
         photo=photo,
-
         caption=(
             "📘 🔥 <b>HSC-27 ACS MATH All Cycle (1-6)</b> 🔥\n\n"
-
             "📋 <b>HSC 2027 ACS MATH ALL CYCLE</b>\n\n"
-
             "<b>ইন্সট্রাক্টর সমূহ</b>\n"
             "▫️ অভিদত্ত তুশার\n"
             "▫️ রকিবুল ভাইয়া\n\n"
-
             "⚪️ <b>ম্যাথ সাইকেল ০১</b>\n"
             "• ম্যাট্রিক্স ও নির্ণায়ক\n"
             "• ভেক্টর\n"
             "• সরলরেখা\n"
             "• বৃত্ত\n\n"
-
             "⚪️ <b>ম্যাথ সাইকেল ০২</b>\n"
             "• বিন্যাস ও সমাবেশ\n"
             "• ত্রিকোণমিতিক অনুপাত\n"
             "• সংযুক্ত কোণের ত্রিকোণমিতি\n\n"
-
             "⚪️ <b>ম্যাথ সাইকেল ০৩</b>\n"
             "• অন্তরীকরণ\n"
             "• যোগজীকরণ\n\n"
-
             "⚪️ <b>ম্যাথ সাইকেল ০৪</b>\n"
             "• বাস্তব সংখ্যা ও অসমতা\n"
             "• যোগাশ্রয়ী প্রোগ্রাম\n"
             "• জটিল সংখ্যা\n"
             "• বহুপদী ও বহুপদী সমীকরণ\n\n"
-
             "⚪️ <b>ম্যাথ সাইকেল ০৫</b>\n"
             "• দ্বিপদী বিস্তৃতি\n"
             "• কণিক\n"
             "• বিপরীত ত্রিকোণমিতি\n\n"
-
             "⚪️ <b>ম্যাথ সাইকেল ০৬</b>\n"
             "• স্থিতিবিদ্যা\n"
             "• সমতলে বস্তুকণার গতি\n"
             "• বিস্তার পরিমাপ ও সম্ভাবনা\n\n"
-
             "🎁 <b>কোর্সের সাথে পাবেন:</b>\n"
             "📍 টপিক ভিত্তিক ক্লাস\n"
             "📍 ক্লাসের লেকচার শীট\n"
@@ -988,132 +740,77 @@ async def acs_math(message):
             "📍 প্র্যাকটিস শীট\n"
             "📍 ডাউট সলভ ক্লাস\n"
             "📍 লাইফটাইম এক্সেস\n\n"
-
             "💰 <b>মূল্য: 5 Points</b>"
         ),
-
         reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="🛒 Buy Course — 5 Points",
-                        callback_data="buy_acs_math"
-                    )
-                ]
-            ]
+            inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 5 Points", callback_data="buy_acs_math")]]
         )
     )
 
-
-# =========================================================
-# ACS BIOLOGY
-# =========================================================
-
 @dp.message(F.text == "🔬 ACS Biology")
 async def acs_biology(message):
-
-    photo = (
-        "AgACAgUAAxkBAAIWfmqCOVEBD2Y3dcYPOl6HAAG6Koyi"
-        "0QAC2RFrG_VbGVR-9ITQRrFGsQEAAwIAA3kAAz0E"
-    )
-
+    photo = "AgACAgUAAxkBAAIWfmqCOVEBD2Y3dcYPOl6HAAG6Koyi0QAC2RFrG_VbGVR-9ITQRrFGsQEAAwIAA3kAAz0E"
     await message.answer_photo(
-
         photo=photo,
-
         caption=(
             "📘 🔥 <b>HSC-27 ACS BIO-MISSION BIOLOGY ALL CYCLE (1-6)</b> 🔥\n\n"
-
             "📋 <b>HSC 2027 ACS BIO-MISSION BIOLOGY ALL CYCLE</b>\n\n"
-
             "📖 <b>ইন্সট্রাক্টর:</b> 👉🏻 শুভ্র ভাই\n\n"
-
             "⚪️ <b>বায়োলজি সাইকেল ০১</b>\n"
             "• কোষ ও কোষের গঠন\n"
             "• কোষ বিভাজন\n"
             "• কোষ রসায়ন\n\n"
-
             "⚪️ <b>বায়োলজি সাইকেল ০২</b>\n"
             "• প্রাণীর বিভিন্নতা ও শ্রেণীবিন্যাস\n"
             "• প্রাণীর পরিচিতি\n"
             "• পরিপাক ও শোষণ\n\n"
-
             "⚪️ <b>বায়োলজি সাইকেল ০৩</b>\n"
             "• অণুজীব\n"
             "• শৈবাল ও ছত্রাক\n"
             "• ব্রায়োফাইটা ও টেরিডোফাইটা\n"
             "• জীব প্রযুক্তি\n\n"
-
             "⚪️ <b>বায়োলজি সাইকেল ০৪</b>\n"
             "• রক্ত ও সংবহন\n"
             "• শ্বসন শাসক্রিয়া\n"
             "• বর্জ্য ও নিষ্কাশন\n"
             "• চলন অঙ্গচলনা\n\n"
-
             "⚪️ <b>বায়োলজি সাইকেল ০৫</b>\n"
             "• নগ্নবীজী ও আবৃতবীজী উদ্ভিদ\n"
             "• টিস্যু ও টিস্যুতন্ত্র\n"
             "• উদ্ভিদ শরীরতত্ত্ব\n"
             "• জীবের পরিবেশ বিস্তার ও সংরক্ষণ\n\n"
-
             "⚪️ <b>বায়োলজি সাইকেল ০৬</b>\n"
             "• সমন্বয় ও নিয়ন্ত্রণ\n"
             "• মানব জীবনের ধারাবাহিকতা\n"
             "• মানবদেহের প্রতিরক্ষা\n"
             "• জিনতত্ত্ব ও বিবর্তন\n"
             "• প্রাণীর আচরণ\n\n"
-
             "🎁 <b>কোর্সের সাথে পাবেন:</b>\n"
             "📍 ক্লাসের লেকচার শীট\n"
             "📍 দাগানো বই PDF\n"
             "📍 প্র্যাকটিস শীট\n"
             "📍 লাইফটাইম এক্সেস\n\n"
-
             "💰 <b>মূল্য: 5 Points</b>"
         ),
-
         reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="🛒 Buy Course — 5 Points",
-                        callback_data="buy_acs_biology"
-                    )
-                ]
-            ]
+            inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 5 Points", callback_data="buy_acs_biology")]]
         )
     )
 
-
-# =========================================================
-# ACS ENGLISH
-# =========================================================
-
 @dp.message(F.text == "📖 ACS English")
 async def acs_english(message):
-
-    photo = (
-        "AgACAgUAAxkBAAIWgmqCOYZrRinwwRLpZ1_211iUpMJa"
-        "AALbEWsb9VsZVHTJsrc-JqbHAQADAgADeAADPQQ"
-    )
-
+    photo = "AgACAgUAAxkBAAIWgmqCOYZrRinwwRLpZ1_211iUpMJaAALbEWsb9VsZVHTJsrc-JqbHAQADAgADeAADPQQ"
     await message.answer_photo(
-
         photo=photo,
-
         caption=(
             "📘 🔥 <b>HSC-27 English by Crowning English</b> 🔥\n\n"
-
             "📋 <b>HSC 2027 CROWNING ENGLISH</b>\n\n"
-
             "👨‍🏫 <b>Teacher:</b>\n"
             "▫️ Shampod Bhowmick\n\n"
-
             "📚 <b>Course Syllabus:</b>\n"
             "▫️ English 1st Paper\n"
             "▫️ English 2nd Paper\n"
             "▫️ HSC to Admission\n\n"
-
             "🎁 <b>কোর্সের সাথে পাবেন</b>\n"
             "📍 HSC English 1st Paper\n"
             "📍 HSC English 2nd Paper\n"
@@ -1121,145 +818,73 @@ async def acs_english(message):
             "📍 Topic Based Classes\n"
             "📍 Lecture Materials\n"
             "📍 Lifetime Access\n\n"
-
             "💰 <b>মূল্য: 3 Points</b>"
         ),
-
         reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="🛒 Buy Course — 3 Points",
-                        callback_data="buy_acs_english"
-                    )
-                ]
-            ]
+            inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 3 Points", callback_data="buy_acs_english")]]
         )
     )
 
-
-# =========================================================
-# ACS BANGLA
-# =========================================================
-
 @dp.message(F.text == "📖 ACS Bangla")
 async def acs_bangla(message):
-
-    photo = (
-        "AgACAgUAAxkBAAIWhGqCOZ7WP-OIxRDSKRL7W51hQgRS"
-        "AALcEWsb9VsZVDTWp3Jkn7YiAQADAgADeAADPQQ"
-    )
-
+    photo = "AgACAgUAAxkBAAIWhGqCOZ7WP-OIxRDSKRL7W51hQgRSAALcEWsb9VsZVDTWp3Jkn7YiAQADAgADeAADPQQ"
     await message.answer_photo(
-
         photo=photo,
-
         caption=(
             "📘 🔥 <b>অনুসর্গের ব্যঞ্জন</b> 🔥\n\n"
-
             "📋 <b>HSC 2027 বাংলা কোর্স</b>\n\n"
-
             "👨‍🏫 <b>ইন্সট্রাক্টর সমূহ</b>\n"
             "▫️ Abida Parvin Choudhuri\n"
             "▫️ Tanvir Ahmed\n\n"
-
             "🎓 <b>HSC-27 Batch এর জন্য</b>\n"
             "📚 সর্বমোট 60+ ক্লাস\n\n"
-
             "📖 <b>কোর্সের বিশেষত্ব</b>\n"
             "📍 HSC-27 Batch এর জন্য সম্পূর্ণ কোর্স\n"
             "📍 সর্বমোট 60+ টি ক্লাস\n"
             "📍 অভিজ্ঞ ইন্সট্রাক্টরদের ক্লাস\n"
             "📍 বাংলা বিষয়ের পূর্ণাঙ্গ প্রস্তুতি\n"
             "📍 HSC পরীক্ষার জন্য প্রস্তুতিমূলক ক্লাস\n\n"
-
             "🔥 <b>অনুসর্গের ব্যঞ্জন</b>\n"
             "🎯 HSC-27 শিক্ষার্থীদের বাংলা প্রস্তুতির জন্য\n\n"
-
             "💰 <b>মূল্য: 3 Points</b>"
         ),
-
         reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="🛒 Buy Course — 3 Points",
-                        callback_data="buy_acs_bangla"
-                    )
-                ]
-            ]
+            inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 3 Points", callback_data="buy_acs_bangla")]]
         )
     )
 
-
-# =========================================================
-# ACS ICT
-# =========================================================
-
 @dp.message(F.text == "💻 ACS ICT")
 async def acs_ict(message):
-
-    photo = (
-        "AgACAgUAAxkBAAIWhmqCObww7OM9xAxpfQ2QW5czLp1i"
-        "AALdEWsb9VsZVHmseobKwvq1AQADAgADeAADPQQ"
-    )
-
+    photo = "AgACAgUAAxkBAAIWhmqCObww7OM9xAxpfQ2QW5czLp1iAALdEWsb9VsZVHmseobKwvq1AQADAgADeAADPQQ"
     await message.answer_photo(
-
         photo=photo,
-
         caption=(
             "📘 🔥 <b>ACS ICT 2027</b> 🔥\n\n"
-
             "📋 <b>ACS ICT BATCH DECODER — HSC 27</b>\n\n"
-
             "📚 <b>অধ্যায় ডিসট্রিবিউশন</b>\n"
             "💡 Chapter 1, 3: Kazi Rakibul Hasan\n"
             "💡 Chapter 2, 4: Abhi Datta Tushar\n"
             "💡 Chapter 5, 6: Md Sharoare Hosan Emon\n\n"
-
             "⚔️ <b>কোর্সের সাথে যা যা পাবে</b>\n"
             "🔘 টপিক ভিত্তিক ক্লাস (HD)\n"
             "🔘 লেকচার শীট + প্র্যাকটিস শীট\n"
             "🔘 বাড়ির কাজের পিডিএফ\n"
             "🔘 অধ্যায় শেষে রিভিশন ক্লাস\n"
             "🔘 লাইফটাইম এক্সেস পাবে\n\n"
-
             "💰 <b>মূল্য: 3 Points</b>"
         ),
-
         reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="🛒 Buy Course — 3 Points",
-                        callback_data="buy_acs_ict"
-                    )
-                ]
-            ]
+            inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 3 Points", callback_data="buy_acs_ict")]]
         )
     )
 
-
-# =========================================================
-# ACS FULL COMBO
-# =========================================================
-
 @dp.message(F.text == "🔥 ACS Full Combo")
 async def acs_full_combo(message):
-
-    photo = (
-        "AgACAgUAAxkBAAIWiGqCOdPQ3zS9zr0jYCsKTZr51qOb"
-        "AALeEWsb9VsZVI1YenP5ThBDAQADAgADeQADPQQ"
-    )
-
+    photo = "AgACAgUAAxkBAAIWiGqCOdPQ3zS9zr0jYCsKTZr51qObAALeEWsb9VsZVI1YenP5ThBDAQADAgADeQADPQQ"
     await message.answer_photo(
-
         photo=photo,
-
         caption=(
             "🔰 <b>HSC-27 ACS Full Combo</b>\n\n"
-
             "➪ ACS Physics Cycle 1 - 6\n"
             "➪ ACS Chemistry Cycle 1 - 5\n"
             "➪ ACS Biology Cycle 1 - 6\n"
@@ -1267,113 +892,60 @@ async def acs_full_combo(message):
             "➪ ACS ICT Decoder\n"
             "➪ ACS English Galacticos 1.0 - 2.0\n"
             "➪ ACS Bangla অনুসর্গের ব্যঞ্জন\n\n"
-
             "✅ Group Organized Class\n"
             "✅ All PDF Materials\n"
             "✅ Lifetime Access\n"
             "✅ 24/7 Admin Support\n\n"
-
             "💰 <b>মূল্য: 15 Points</b>"
         ),
-
         reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="🛒 Buy Course — 15 Points",
-                        callback_data="buy_acs_combo"
-                    )
-                ]
-            ]
+            inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 15 Points", callback_data="buy_acs_combo")]]
         )
     )
 
-
-# =========================================================
-# UDVASH PRIME
-# =========================================================
-
 @dp.message(F.text == "🎓 Udvash 1st Year Prime Batch")
 async def udvash_prime(message, state: FSMContext):
-
     await state.set_state(MenuState.UDVASH)
-
-    photo = (
-        "AgACAgUAAxkBAAIWimqCOeXhvW_QE6N_0gUAAWNaiwKSq"
-        "wAC3xFrG_VbGVQast1rLZwmmgEAAwIAA20AAz0E"
-    )
-
+    photo = "AgACAgUAAxkBAAIWimqCOeXhvW_QE6N_0gUAAWNaiwKSqwAC3xFrG_VbGVQast1rLZwmmgEAAwIAA20AAz0E"
     await message.answer_photo(
-
         photo=photo,
-
         caption=(
             "📘 🔥 <b>UDVASH HSC 1st Year Prime Batch</b> 🔥\n\n"
-
             "📋 <b>UDVASH HSC 1st YEAR PRIME BATCH</b>\n\n"
-
             "🎓 <b>HSC 2027 Batch এর জন্য</b>\n\n"
-
             "📚 <b>যে বিষয়গুলো থাকছে</b>\n"
             "🔵 Physics\n"
             "🟢 Chemistry\n"
             "🟣 Biology\n"
             "🟠 Higher Mathematics\n\n"
-
             "⚔️ <b>কোর্সের সাথে যা যা পাবে</b>\n"
             "🏷️ HD রেজুলেশন ক্লাস\n"
             "🏷️ টপিক ভিত্তিক ক্লাস\n"
             "🏷️ গোছানো ক্লাস PDF\n"
             "🏷️ লাইফটাইম এক্সেস\n\n"
-
             "💰 <b>মূল্য: 10 Points</b>"
         ),
-
         reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="🛒 Buy Course — 10 Points",
-                        callback_data="buy_udvash_prime"
-                    )
-                ]
-            ]
+            inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 10 Points", callback_data="buy_udvash_prime")]]
         )
     )
 
-
-# =========================================================
-# UDVASH ENGLISH + BANGLA
-# =========================================================
-
 @dp.message(F.text == "📚 Udvash English-Bangla")
 async def udvash_english_bangla(message, state: FSMContext):
-
     await state.set_state(MenuState.UDVASH)
-
-    photo = (
-        "AgACAgUAAxkBAAIWjGqCOfy3ZJjxHanwq86GIk1q1fi_A"
-        "ALgEWsb9VsZVAMI-drj34G9AQADAgADeAADPQQ"
-    )
-
+    photo = "AgACAgUAAxkBAAIWjGqCOfy3ZJjxHanwq86GIk1q1fi_AALgEWsb9VsZVAMI-drj34G9AQADAgADeAADPQQ"
     await message.answer_photo(
-
         photo=photo,
-
         caption=(
             "📘 🔥 <b>UDVASH HSC-27 ENGLISH & BANGLA</b> 🔥\n\n"
-
             "📋 <b>UDVASH HSC 2027 ENGLISH & BANGLA COURSE</b>\n\n"
-
             "📚 <b>বিষয়সমূহ</b>\n"
             "🔵 বাংলা ১ম পত্র\n"
             "🔵 বাংলা ২য় পত্র\n"
             "🟢 ইংরেজি ১ম পত্র\n"
             "🟢 ইংরেজি ২য় পত্র\n\n"
-
             "🎓 <b>HSC-27 Batch এর জন্য</b>\n"
             "✨ বাংলা ও ইংরেজির পূর্ণাঙ্গ প্রস্তুতি\n\n"
-
             "⚔️ <b>কোর্সের সাথে যা যা পাবে</b>\n"
             "🏷️ HD রেজুলেশন ক্লাস\n"
             "🏷️ টপিক ভিত্তিক ক্লাস\n"
@@ -1381,55 +953,29 @@ async def udvash_english_bangla(message, state: FSMContext):
             "🏷️ গুরুত্বপূর্ণ Lecture Materials\n"
             "🏷️ Practice & Exam Preparation\n"
             "🏷️ লাইফটাইম এক্সেস\n\n"
-
             "💰 <b>মূল্য: 5 Points</b>"
         ),
-
         reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="🛒 Buy Course — 5 Points",
-                        callback_data="buy_udvash_english_bangla"
-                    )
-                ]
-            ]
+            inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 5 Points", callback_data="buy_udvash_english_bangla")]]
         )
     )
 
-
-# =========================================================
-# UDVASH ICT
-# =========================================================
-
 @dp.message(F.text == "💻 Udvash ICT")
 async def udvash_ict(message, state: FSMContext):
-
     await state.set_state(MenuState.UDVASH)
-
-    photo = (
-        "AgACAgUAAxkBAAIWjmqCOhVY5LAgq_Ri461JzBHOkd3W"
-        "AALhEWsb9VsZVGWoYbwMSRtMAQADAgADeQADPQQ"
-    )
-
+    photo = "AgACAgUAAxkBAAIWjmqCOhVY5LAgq_Ri461JzBHOkd3WAALhEWsb9VsZVGWoYbwMSRtMAQADAgADeQADPQQ"
     await message.answer_photo(
-
         photo=photo,
-
         caption=(
             "📘 🔥 <b>UDVASH HSC-27 ICT</b> 🔥\n\n"
-
             "📋 <b>UDVASH HSC 2027 ICT COURSE</b>\n\n"
-
             "💻 <b>ICT এর সম্পূর্ণ প্রস্তুতি</b>\n"
             "🔹 HSC ICT Syllabus Coverage\n"
             "🔹 Chapter-wise Classes\n"
             "🔹 Topic-based Preparation\n"
             "🔹 CQ & MCQ Preparation\n\n"
-
             "🎓 <b>HSC-27 Batch এর জন্য</b>\n"
             "✨ ICT বিষয়ে পূর্ণাঙ্গ প্রস্তুতি\n\n"
-
             "⚔️ <b>কোর্সের সাথে যা যা পাবে</b>\n"
             "🏷️ HD রেজুলেশন ক্লাস\n"
             "🏷️ টপিক ভিত্তিক ক্লাস\n"
@@ -1437,19 +983,10 @@ async def udvash_ict(message, state: FSMContext):
             "🏷️ Lecture Sheet & Practice Materials\n"
             "🏷️ CQ + MCQ Preparation\n"
             "🏷️ লাইফটাইম এক্সেস\n\n"
-
             "💰 <b>মূল্য: 5 Points</b>"
         ),
-
         reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="🛒 Buy Course — 5 Points",
-                        callback_data="buy_udvash_ict"
-                    )
-                ]
-            ]
+            inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 5 Points", callback_data="buy_udvash_ict")]]
         )
     )
 
@@ -1479,10 +1016,7 @@ def hsc28_sub_menu(platform_name):
 @dp.message(F.text == "🎓 HSC-28")
 async def hsc28_command(message, state: FSMContext):
     await state.set_state(MenuState.HSC28_PLATFORM)
-    
-    # এখানে প্ল্যাটফর্ম সিলেক্ট করার ছবি দেওয়া হলো
     photo = "AgACAgUAAxkBAAIUVWqBwk2om5Q7FDV_8ziqbutItiX5AAJhE2sb9VsRVIdaOFFA0fJvAQADAgADeQADPQQ"
-    
     await message.answer_photo(
         photo=photo,
         caption=(
@@ -1525,7 +1059,7 @@ async def hsc28_ft_menu(message, state: FSMContext):
 @dp.message(F.text == "🔬 HSC-28 ACS Physics")
 async def hsc28_acs_phy(message):
     photo = "AgACAgUAAxkBAAIaf2qEnyF3o0Sm34PAx7I0Sq0kTj-cAAI6FGsby_UoVA26IhTTCnrwAQADAgADeQADPQQ"
-    caption = "📖 <b>𝗔𝗖𝗦 𝗣𝗛𝗬𝗦𝗜𝗖𝗦 𝗖𝗬𝗖𝗟𝗘 (𝗛𝗦𝗖 𝟮𝟴)</b>\n\n🗃 <b>শিক্ষক প্যানেল:</b>\n👤 অপূর্ব ভাই\n👤 মাশরুর ভাই\n\n📖 <b>Available Cycles:</b>\n◉ Cycle 1, 2, 3, 4, 5 & 6\n\n🔰 <b>কেন আমাদের থেকে নিবেন:</b>\n✅ Telegram সাজানো ক্লাস\n✅ Everyday Class Update 🕔\n✅ All PDF Materials 📄\n✅ Trusted ✅\n✅ After Sales Service 🍑\n✅ Lifetime Access 🎓\n✅ 24/7 Admin Support 👤\n✅ Best Service At Unbeatable Price 📊\n\n─────────♡─────────────\n📖 <b>কোর্সের মূল্য: 5 Point</b> 🔥🔥\n─────────♡─────────────"
+    caption = "📖 <b>𝗔𝗖𝗦 𝗣𝗛𝗬𝗦𝗜𝗖𝗦 𝗖𝗬𝗖𝗟𝗘 (𝗛𝗦 𝟮𝟴)</b>\n\n🗃 <b>শিক্ষক প্যানেল:</b>\n👤 অপূর্ব ভাই\n👤 মাশরুর ভাই\n\n📖 <b>Available Cycles:</b>\n◉ Cycle 1, 2, 3, 4, 5 & 6\n\n🔰 <b>কেন আমাদের থেকে নিবেন:</b>\n✅ Telegram সাজানো ক্লাস\n✅ Everyday Class Update 🕔\n✅ All PDF Materials 📄\n✅ Trusted ✅\n✅ After Sales Service 🍑\n✅ Lifetime Access 🎓\n✅ 24/7 Admin Support 👤\n✅ Best Service At Unbeatable Price 📊\n\n─────────♡─────────────\n📖 <b>কোর্সের মূল্য: 5 Point</b> 🔥🔥\n─────────♡─────────────"
     markup = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 5 Points", callback_data="buy_h28_acs_phy")]])
     await message.answer_photo(photo=photo, caption=caption, reply_markup=markup)
 
@@ -1829,10 +1363,6 @@ async def ca_momit(message):
 # BACK BUTTON
 # =========================================================
 
-# =========================================================
-# BACK BUTTON
-# =========================================================
-
 @dp.message(F.text == "⬅️ Back")
 async def back_button(message, state: FSMContext):
     current_state = await state.get_state()
@@ -1861,9 +1391,7 @@ async def back_button(message, state: FSMContext):
 
 @dp.message(F.text == "🔝 Main Menu")
 async def back_main_menu(message, state: FSMContext):
-
     await state.clear()
-
     await message.answer(
         "🏠 <b>Main Menu</b>",
         reply_markup=main_menu()
@@ -1875,22 +1403,9 @@ async def back_main_menu(message, state: FSMContext):
 
 @dp.message(F.text == "🏆 Leaderboard")
 async def leaderboard(message):
-
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        SELECT name, username, referrals, points
-        FROM users
-        ORDER BY referrals DESC, points DESC
-        LIMIT 10
-        """
-    )
-
-    users = cursor.fetchall()
-
-    conn.close()
+    
+    cursor = users_collection.find().sort([("referrals", -1), ("points", -1)]).limit(10)
+    users = await cursor.to_list(length=10)
 
     if not users:
         await message.answer(
@@ -1900,27 +1415,23 @@ async def leaderboard(message):
         return
 
     text = "🏆 <b>Referral Leaderboard</b>\n\n"
+    medals = {1: "🥇", 2: "🥈", 3: "🥉"}
 
-    medals = {
-        1: "🥇",
-        2: "🥈",
-        3: "🥉"
-    }
-
-    for index, (name, username, referrals, points) in enumerate(users, start=1):
-
+    for index, user in enumerate(users, start=1):
         medal = medals.get(index, "")
-
+        
+        name = user.get("name", "Unknown")
         if not name:
             name = "Unknown"
 
-        if not username:
+        username = user.get("username", "Not Set")
+        if not username or username == "Not Set":
             username = "Not Set"
         elif not username.startswith("@"):
             username = f"@{username}"
 
-        referrals = referrals or 0
-        points = points or 0
+        referrals = user.get("referrals", 0)
+        points = user.get("points", 0)
 
         text += (
             f"{medal} <b>{index}. {name}</b>\n"
@@ -1938,17 +1449,12 @@ async def leaderboard(message):
 
 @dp.message(F.text == "কোর্স কিভাবে নিবে 🛠️")
 async def how_to_get_course(message):
-
     await message.answer(
-
         "🛠️ <b>কোর্স কিভাবে নিবে?</b>\n\n"
-
         "1️⃣ প্রথমে আমাদের required channel-গুলোতে Join করুন।\n\n"
         "2️⃣ Referral করে Points সংগ্রহ করুন।\n\n"
-        "3️⃣ <b>📚 Redeem Courses</b> থেকে আপনার পছন্দের "
-        "course select করুন।\n\n"
-        "4️⃣ Course-এর required Points দেখে তারপর "
-        "পরবর্তী নির্দেশনা অনুসরণ করুন।"
+        "3️⃣ <b>📚 Redeem Courses</b> থেকে আপনার পছন্দের course select করুন।\n\n"
+        "4️⃣ Course-এর required Points দেখে তারপর পরবর্তী নির্দেশনা অনুসরণ করুন।"
     )
 
 # =========================================================
@@ -1957,15 +1463,11 @@ async def how_to_get_course(message):
 
 @dp.message(F.text.startswith("/addpoint"))
 async def add_point_command(message):
-    
-    # অ্যাডমিন ভেরিফিকেশন
     if message.from_user.id != ADMIN_ID:
         await message.answer("❌ You are not authorized to use this command.")
         return
 
     args = message.text.split()
-    
-    # সঠিক নিয়ম চেক করা
     if len(args) != 3:
         await message.answer("⚠️ <b>সঠিক নিয়ম:</b>\n/addpoint <user_id> <amount>")
         return
@@ -1977,20 +1479,14 @@ async def add_point_command(message):
         await message.answer("❌ User ID এবং Amount অবশ্যই সংখ্যা হতে হবে।")
         return
 
-    # ডাটাবেসে পয়েন্ট আপডেট করা
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT points FROM users WHERE user_id=?", (target_user_id,))
-    user = cursor.fetchone()
+    user = await users_collection.find_one({"user_id": target_user_id})
 
     if user:
-        new_points = user[0] + points_to_add
-        cursor.execute(
-            "UPDATE users SET points=? WHERE user_id=?",
-            (new_points, target_user_id)
+        new_points = user.get("points", 0) + points_to_add
+        await users_collection.update_one(
+            {"user_id": target_user_id},
+            {"$set": {"points": new_points}}
         )
-        conn.commit()
         
         await message.answer(
             f"✅ <b>পয়েন্ট অ্যাড করা হয়েছে!</b>\n\n"
@@ -1999,74 +1495,24 @@ async def add_point_command(message):
             f"💰 New Balance: {new_points} Points"
         )
         
-        # ইউজারকে নোটিফিকেশন পাঠানো (যদি বট তাকে মেসেজ দিতে পারে)
         try:
             await bot.send_message(
                 target_user_id,
                 f"🎁 <b>Congratulations!</b>\nAdmin আপনাকে {points_to_add} Points উপহার দিয়েছে!\n"
                 f"💰 আপনার বর্তমান ব্যালেন্স: {new_points} Points"
             )
-        except Exception as e:
+        except Exception:
             await message.answer("⚠️ ইউজারকে নোটিফিকেশন পাঠানো যায়নি (হয়তো সে বট ব্লক করেছে)।")
-            
     else:
         await message.answer("❌ এই User ID ডাটাবেসে পাওয়া যায়নি।")
-        
-    conn.close()
+
 
 # =========================================================
 # BUY COURSE / PURCHASE FLOW
 # =========================================================
 
-# কোন callback_data এর জন্য কোন কোর্স তা চেনার জন্য ডিকশনারি
-
-# =========================================================
-# CALLBACK TO COURSE
-# =========================================================
-
-CALLBACK_TO_COURSE = {
-    # HSC-27
-    "buy_acs_physics": "🧬 ACS Physics", "buy_acs_chemistry": "🧪 ACS Chemistry", "buy_acs_math": "📐 ACS Math",
-    "buy_acs_biology": "🔬 ACS Biology", "buy_acs_english": "📖 ACS English", "buy_acs_bangla": "📖 ACS Bangla",
-    "buy_acs_ict": "💻 ACS ICT", "buy_acs_combo": "🔥 ACS Full Combo", "buy_udvash_prime": "🎓 Udvash 1st Year Prime Batch",
-    "buy_udvash_english_bangla": "📚 Udvash English-Bangla", "buy_udvash_ict": "💻 Udvash ICT",
-
-    # HSC-28
-    "buy_h28_acs_phy": "🔬 HSC-28 ACS Physics", "buy_h28_acs_chem": "🧪 HSC-28 ACS Chemistry", 
-    "buy_h28_acs_math": "📐 HSC-28 ACS Math", "buy_h28_acs_bio": "🧬 HSC-28 ACS Biology", 
-    "buy_h28_acs_ebi": "📖 HSC-28 ACS EBI", "buy_h28_acs_combo": "🔥 HSC-28 ACS Combo",
-    
-    "buy_h28_ud_phy": "🔬 HSC-28 Udvash Physics", "buy_h28_ud_chem": "🧪 HSC-28 Udvash Chemistry", 
-    "buy_h28_ud_math": "📐 HSC-28 Udvash Math", "buy_h28_ud_bio": "🧬 HSC-28 Udvash Biology", 
-    "buy_h28_ud_ebi": "📖 HSC-28 Udvash EBI", "buy_h28_ud_combo": "🔥 HSC-28 Udvash Combo",
-    
-    "buy_h28_rm_phy": "🔬 HSC-28 RM Physics", "buy_h28_rm_chem": "🧪 HSC-28 RM Chemistry", 
-    "buy_h28_rm_math": "📐 HSC-28 RM Math", "buy_h28_rm_bio": "🧬 HSC-28 RM Biology", 
-    "buy_h28_rm_ebi": "📖 HSC-28 RM EBI", "buy_h28_rm_combo": "🔥 HSC-28 RM Combo",
-    
-    "buy_h28_ft_pcmb": "📚 HSC-28 FT PCMB", "buy_h28_ft_ebi": "📖 HSC-28 FT EBI 4.0",
-    "buy_h28_fhad_bio": "🧬 HSC-28 ACS Fahad Biology", "buy_h28_banglabaz": "📖 HSC-28 Banglabaz 8.0",
-
-    # SSC-27
-    "buy_s27_rm_b2p": "📘 RM B2P 3.0",
-    "buy_s27_rm_frpb": "📘 RM FRPB 27",
-    "buy_s27_acs_frb": "🔰 ACS FRB",
-    "buy_s27_ft_acad": "💡 FT Academic",
-    "buy_s27_ft_frc": "💡 FT FRC",
-    "buy_s27_rm_combo": "🔥 RM FRPB 27 + B2P 3.0",
-
-    # SSC-28
-    "buy_s28_rm_b2p": "📘 RM SSC-28 B2P 3.0",
-
-    # College Admission
-    "get_ca_ft": "🆓 FT College Admission",
-    "get_ca_udvash": "🆓 Udvash College Admission",
-    "get_ca_momit": "🆓 Momit College Admission"
-}
-
 @dp.callback_query(F.data.startswith("buy_") | F.data.startswith("get_"))
 async def handle_buy_course(callback):
-    
     user_id = callback.from_user.id
     course_name = CALLBACK_TO_COURSE.get(callback.data)
     
@@ -2075,22 +1521,15 @@ async def handle_buy_course(callback):
         return
         
     required_points = COURSE_POINTS.get(course_name)
-    
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT points FROM users WHERE user_id=?", (user_id,))
-    user = cursor.fetchone()
+    user = await users_collection.find_one({"user_id": user_id})
     
     if not user:
-        conn.close()
         await callback.answer("⚠️ দয়া করে আগে /start কমান্ড দিন।", show_alert=True)
         return
         
-    current_points = user[0]
+    current_points = user.get("points", 0)
     
-    # ১. পয়েন্ট চেক
     if current_points < required_points:
-        conn.close()
         shortfall = required_points - current_points
         await callback.answer(
             f"❌ আপনার পর্যাপ্ত পয়েন্ট নেই!\n\n"
@@ -2101,17 +1540,12 @@ async def handle_buy_course(callback):
         )
         return
         
-    # ২. পয়েন্ট কেটে নেওয়া
     new_points = current_points - required_points
-    cursor.execute("UPDATE users SET points=? WHERE user_id=?", (new_points, user_id))
-    conn.commit()
-    conn.close()
+    await users_collection.update_one({"user_id": user_id}, {"$set": {"points": new_points}})
     
-    # ৩. ইনভাইট লিংক জেনারেট এবং মেসেজ পাঠানো
     await callback.message.answer("⏳ আপনার কোর্সের অ্যাক্সেস লিংক তৈরি করা হচ্ছে... দয়া করে অপেক্ষা করুন।")
     
     try:
-        # Full Combo-এর জন্য স্পেশাল লজিক (HSC-27 & HSC-28)
         combo_lists = {
             "🔥 ACS Full Combo": ACS_COMBO_COURSES,
             "🔥 HSC-28 ACS Combo": HSC28_ACS_COMBO,
@@ -2138,8 +1572,6 @@ async def handle_buy_course(callback):
                 f"🔗 <b>Your Access Links (One-time use):</b>\n\n{links_text}\n"
                 f"⚠️ <i>লিংকগুলো শুধুমাত্র একবার কাজ করবে, তাই অন্য কাউকে শেয়ার করবেন না!</i>"
             )
-            
-        # সাধারণ (সিঙ্গেল) কোর্সের জন্য
         else:
             chat_id = COURSE_CHAT_IDS.get(course_name)
             invite = await bot.create_chat_invite_link(chat_id, member_limit=1)
@@ -2157,26 +1589,18 @@ async def handle_buy_course(callback):
         await callback.answer()
         
     except Exception as e:
-        # যদি বট গ্রুপে অ্যাডমিন না হয় বা অন্য কোনো কারণে লিংক তৈরি করতে না পারে
         print(f"Error creating invite link: {e}")
-        
-        # যেহেতু লিংক দিতে পারেনি, তাই ইউজারের পয়েন্ট ফেরত দেওয়া
-        conn = sqlite3.connect(DB_NAME)
-        cursor = conn.cursor()
-        cursor.execute("UPDATE users SET points=? WHERE user_id=?", (current_points, user_id))
-        conn.commit()
-        conn.close()
-        
+        await users_collection.update_one({"user_id": user_id}, {"$set": {"points": current_points}})
         await callback.message.answer(
             "❌ <b>দুঃখিত! টেকনিক্যাল সমস্যার কারণে লিংক তৈরি করা যায়নি।</b>\n"
             "আপনার পয়েন্ট রিফান্ড করা হয়েছে। অনুগ্রহ করে অ্যাডমিনের সাথে যোগাযোগ করুন।"
         )
         
+
 # =========================================================
 # MORE ADMIN COMMANDS
 # =========================================================
 
-# --- ১. পয়েন্ট কেটে নেওয়া (ভুল ঠিক করার জন্য) ---
 @dp.message(F.text.startswith("/removepoint"))
 async def remove_point_command(message):
     if message.from_user.id != ADMIN_ID:
@@ -2194,18 +1618,13 @@ async def remove_point_command(message):
         await message.answer("❌ User ID এবং Amount সংখ্যা হতে হবে।")
         return
 
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT points FROM users WHERE user_id=?", (target_user_id,))
-    user = cursor.fetchone()
+    user = await users_collection.find_one({"user_id": target_user_id})
 
     if user:
-        # পয়েন্ট যেন মাইনাস (0 এর নিচে) না হয়ে যায়
-        current_points = user[0]
+        current_points = user.get("points", 0)
         new_points = max(0, current_points - points_to_remove)
         
-        cursor.execute("UPDATE users SET points=? WHERE user_id=?", (new_points, target_user_id))
-        conn.commit()
+        await users_collection.update_one({"user_id": target_user_id}, {"$set": {"points": new_points}})
         
         await message.answer(
             f"✅ <b>পয়েন্ট মাইনাস করা হয়েছে!</b>\n\n"
@@ -2215,10 +1634,8 @@ async def remove_point_command(message):
         )
     else:
         await message.answer("❌ এই User ID ডাটাবেসে পাওয়া যায়নি।")
-    conn.close()
 
 
-# --- ২. ইউজারের বিস্তারিত তথ্য দেখা ---
 @dp.message(F.text.startswith("/userinfo"))
 async def userinfo_command(message):
     if message.from_user.id != ADMIN_ID:
@@ -2235,15 +1652,15 @@ async def userinfo_command(message):
         await message.answer("❌ User ID সংখ্যা হতে হবে।")
         return
 
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT name, username, points, referrals FROM users WHERE user_id=?", (target_id,))
-    user = cursor.fetchone()
-    conn.close()
+    user = await users_collection.find_one({"user_id": target_id})
 
     if user:
-        name, username, points, referrals = user
-        username_text = username if username else "Not Set"
+        name = user.get("name", "Unknown")
+        username = user.get("username", "")
+        points = user.get("points", 0)
+        referrals = user.get("referrals", 0)
+        
+        username_text = f"@{username}" if username else "Not Set"
         await message.answer(
             f"👤 <b>User Information</b>\n\n"
             f"📛 Name: {name}\n"
@@ -2256,17 +1673,12 @@ async def userinfo_command(message):
         await message.answer("❌ ইউজার ডাটাবেসে পাওয়া যায়নি।")
 
 
-# --- ৩. বটের টোটাল স্ট্যাটাস দেখা ---
 @dp.message(F.text == "/stats")
 async def stats_command(message):
     if message.from_user.id != ADMIN_ID:
         return
         
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM users")
-    total_users = cursor.fetchone()[0]
-    conn.close()
+    total_users = await users_collection.count_documents({})
     
     await message.answer(
         f"📊 <b>Bot Statistics</b>\n\n"
@@ -2274,7 +1686,6 @@ async def stats_command(message):
     )
 
 
-# --- ৪. ব্রডকাস্ট (সবাইকে মেসেজ পাঠানো) ---
 @dp.message(F.text.startswith("/broadcast"))
 async def broadcast_command(message):
     if message.from_user.id != ADMIN_ID:
@@ -2286,22 +1697,19 @@ async def broadcast_command(message):
         await message.answer("⚠️ <b>সঠিক নিয়ম:</b>\n/broadcast <আপনার মেসেজ>")
         return
 
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT user_id FROM users")
-    users = cursor.fetchall()
-    conn.close()
+    cursor = users_collection.find({}, {"user_id": 1})
+    users = await cursor.to_list(length=None)
 
     await message.answer(f"📢 Broadcast শুরু হয়েছে... (Total users: {len(users)})\nদয়া করে অপেক্ষা করুন।")
     
     success_count = 0
-    for user in users:
+    for u in users:
         try:
-            await bot.send_message(chat_id=user[0], text=text_to_send)
+            await bot.send_message(chat_id=u["user_id"], text=text_to_send)
             success_count += 1
-            await asyncio.sleep(0.05)  # টেলিগ্রামের স্প্যাম লিমিট থেকে বাঁচতে
+            await asyncio.sleep(0.05)
         except Exception:
-            pass  # ইউজার বট ব্লক করে দিলে এরর ইগনোর করবে
+            pass
             
     await message.answer(
         f"✅ <b>Broadcast সম্পন্ন হয়েছে!</b>\n\n"
@@ -2315,12 +1723,10 @@ async def broadcast_command(message):
 @dp.message(F.photo)
 async def get_photo_id(message):
     file_id = message.photo[-1].file_id
-
     print("================================")
     print("PHOTO FILE ID:")
     print(file_id)
     print("================================")
-
     await message.answer(
         f"✅ Photo received!\n\n"
         f"File ID:\n{file_id}"
@@ -2331,7 +1737,6 @@ async def handle_ping(request):
 
 async def main():
     print("🚀 Bot is running...")
-    
     app = web.Application()
     app.router.add_get('/', handle_ping)
     runner = web.AppRunner(app)
