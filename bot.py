@@ -129,7 +129,7 @@ COURSE_POINTS = {
     "🔬 HSC-28 RM Physics": 5, "🧪 HSC-28 RM Chemistry": 5, "📐 HSC-28 RM Math": 5,
     "🧬 HSC-28 RM Biology": 5, "📖 HSC-28 RM EBI": 5, "🔥 HSC-28 RM Combo": 20,
     "📚 HSC-28 FT PCMB": 5, "📖 HSC-28 FT EBI 4.0": 5,
-    "🧬 HSC-28 Biology Haters": 5, "📖 HSC-28 Banglabaz 8.0": 5,
+    "🧬 HSC-28 ACS Fahad Biology ": 5, "📖 HSC-28 Banglabaz 8.0": 5,
     
     # SSC-27
     "📘 RM B2P 3.0": 5, "📘 RM FRPB 27": 5, "🔰 ACS FRB": 5,
@@ -163,7 +163,7 @@ COURSE_CHAT_IDS = {
     "🔬 HSC-28 RM Physics": -1003949266673, "🧪 HSC-28 RM Chemistry": -1004292838640,
     "📐 HSC-28 RM Math": -1003578406989, "🧬 HSC-28 RM Biology": -1004460124967, "📖 HSC-28 RM EBI": -1004347215700,
     "📚 HSC-28 FT PCMB": -1004320388177, "📖 HSC-28 FT EBI 4.0": -1004409001270,
-    "🧬 HSC-28 Biology Haters": -1004431839453, "📖 HSC-28 Banglabaz 8.0": -1004441373692,
+    "🧬 HSC-28 ACS Fahad Biology": -1004431839453, "📖 HSC-28 Banglabaz 8.0": -1004441373692,
     
     # SSC-27
     "📘 RM B2P 3.0": -1004433054061, "📘 RM FRPB 27": -1004402125191, "🔰 ACS FRB": -1003551363988,
@@ -1465,7 +1465,7 @@ def hsc28_platform_menu():
     buttons = [
         [KeyboardButton(text="🔰 HSC-28 ACS"), KeyboardButton(text="🎓 HSC-28 Udvash")],
         [KeyboardButton(text="🔥 Redwan's Method"), KeyboardButton(text="💡 Fahad's Tutorial")],
-        [KeyboardButton(text="🧬 Biology Haters"), KeyboardButton(text="📖 Banglabaz 8.0")],
+        [KeyboardButton(text="🧬 ACS Fahad Biology"), KeyboardButton(text="📖 Banglabaz 8.0")],
         [KeyboardButton(text="⬅️ Back"), KeyboardButton(text="🔝 Main Menu")]
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
@@ -1678,11 +1678,11 @@ async def hsc28_ft_ebi(message):
     markup = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 5 Points", callback_data="buy_h28_ft_ebi")]])
     await message.answer_photo(photo=photo, caption=caption, reply_markup=markup)
 
-@dp.message(F.text == "🧬 Biology Haters")
+@dp.message(F.text == "🧬 ACS Fahad Biology")
 async def hsc28_bio_haters(message):
-    photo = "AgACAgUAAxkBAAIap2qEpk5Bsfa_Xn68zkpD6A5Yp_O4AAJJFGsby_UoVAMCXJZOGV5kAQADAgADeQADPQQ"
-    caption = "📖 <b>𝗕𝗶𝗼𝗹𝗼𝗴𝘆 𝗛𝗮𝘁𝗲𝗿𝘀 (𝗛𝗦𝗖 𝟮𝟴)</b>\n\n🗃 <b>শিক্ষক প্যানেল:</b>\n👤 Dr. Rajib Sarkar\n\n📖 <b>Available Cycles:</b>\n◉ Cycle 1, 2, 3, 4, 5 & 6\n\n🔰 <b>কেন আমাদের থেকে নিবেন:</b>\n✅ Telegram সাজানো ক্লাস\n✅ Everyday Class Update 🕔\n✅ Lifetime Access 🎓\n\n─────────♡─────────────\n📖 <b>সবগুলো কম্বো মূল্য: 5 Point</b>🔥🔥\n─────────♡─────────────"
-    markup = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 5 Points", callback_data="buy_h28_bio_haters")]])
+    photo = "AgACAgUAAxkBAAIpTWqN-RCTi_Q1Es-QdT31wjA9P0FiAAKfD2sb3FVwVCkRbDWuwZRbAQADAgADeQADPQQ"
+    caption = "📖 <b>ACS Fahad Biology (HSC 28)</b>\n\n🗃 <b>শিক্ষক প্যানেল:</b>\n👤 Fahad Sir\n\n📖 <b>Available Cycles:</b>\n◉ Cycle 1, 2, 3, 4, 5 & 6\n\n🔰 <b>কেন আমাদের থেকে নিবেন:</b>\n✅ Telegram সাজানো ক্লাস\n✅ Everyday Class Update 🕔\n✅ Lifetime Access 🎓\n\n─────────♡─────────────\n📖 <b>কোর্সের মূল্য: 5 Point</b>🔥🔥\n─────────♡─────────────"
+    markup = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🛒 Buy Course — 5 Points", callback_data="buy_h28_fhad_bio")]])
     await message.answer_photo(photo=photo, caption=caption, reply_markup=markup)
 
 @dp.message(F.text == "📖 Banglabaz 8.0")
@@ -2049,7 +2049,7 @@ CALLBACK_TO_COURSE = {
     "buy_h28_rm_ebi": "📖 HSC-28 RM EBI", "buy_h28_rm_combo": "🔥 HSC-28 RM Combo",
     
     "buy_h28_ft_pcmb": "📚 HSC-28 FT PCMB", "buy_h28_ft_ebi": "📖 HSC-28 FT EBI 4.0",
-    "buy_h28_bio_haters": "🧬 HSC-28 Biology Haters", "buy_h28_banglabaz": "📖 HSC-28 Banglabaz 8.0",
+    "buy_h28_fhad_bio": "🧬 HSC-28 ACS Fahad Biology", "buy_h28_banglabaz": "📖 HSC-28 Banglabaz 8.0",
 
     # SSC-27
     "buy_s27_rm_b2p": "📘 RM B2P 3.0",
